@@ -1,13 +1,19 @@
-use punkt::{TrainingData, SentenceTokenizer, tokenizer};
+use vtext::tokenize::{VTextTokenizerParams,Tokenizer};
 
 pub struct Pool{
     metamap_pool: Vec<Metamap>,
 }
 
 pub struct Metamap {
-    model_data: TrainingData,
-    segmenter: SentenceTokenizer,
+    segmenter: Tokenizer,
+    
 } 
+
+
+// IF ((right context = period + space + capital letter
+//OR period + quote + space + capital letter
+//OR period + space + quote + capital letter)
+//AND (left context != abbreviation))
 
 impl Metamap {
     pub fn segment_sentence(self, input: &str) -> Box<dyn tokenizer> {

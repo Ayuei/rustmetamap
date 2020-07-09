@@ -8,5 +8,4 @@ edition = "2018"
 
 [dependencies]
 subprocess = "0.2"
-structopt = { version = "0.3", default-features = false }
 vtext = "0.2"

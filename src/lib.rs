@@ -7,6 +7,7 @@ pub struct Pool{
     metamap_pool: Vec<Metamap>,
 }
 
+#[derive(Debug)]
 pub struct MMIConcepts {
     index: String,
     mm: String,
@@ -58,19 +59,25 @@ impl Metamap {
         }
     }
 
-    pub fn extract_concepts(&mut self, input: &str, segment_sentence: bool) -> Vec<&str> { 
-        let mmCommand = self.cmd.join(" ");
+    pub fn extract_concepts(&mut self, input: &str, segment_sentence: bool) -> Vec<MMIConcepts> { 
+        let mut mm_command = self.cmd.join(" ");
+        mm_command.push_str(" --silent");
 
         let sentences = match segment_sentence {
             true => self.segmenter.tokenize(input).collect(),
             false => vec![input],
         }.join("\n");
 
-        let raw_output = {Exec::shell(format!("echo -e {}", sentences)) | Exec::cmd(self.cmd.join(" "))}
-                        .capture()
-                        .unwrap();
+        let shell_command = format!("echo {}", sentences);
 
-        vec![]
+        {Exec::shell(shell_command) | Exec::shell(mm_command)}
+                        .capture()
+                        .unwrap()
+                        .stdout_str()
+                        .lines()
+                        .skip(1)
+                        .map(|e| MMIConcepts::from(e.into()))
+                        .collect()
     } 
 
     pub fn composite_phrase<'a>(&'a mut self, num_phrases: usize) -> &'a Metamap {

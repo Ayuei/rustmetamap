@@ -106,7 +106,7 @@ impl MetamapLite {
                         .stdout_str()
                         .lines()
                         .skip(1)
-                        .map(|e| MetamapMMIConcepts::from(e.into()))
+                        .map(|e| MetamapLiteMMIConcepts::from(e.into()))
                         .collect()
     } 
 

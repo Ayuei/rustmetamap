@@ -8,7 +8,38 @@ pub struct Pool{
 }
 
 #[derive(Debug)]
-pub struct MMIConcepts {
+pub struct MetamapLiteMMIConcepts {
+    index: String, 
+    mm: String, 
+    score: String, 
+    preferred_name: String, 
+    cui: String, 
+    semtypes: String, 
+    trigger: String, 
+    pos_info: String, 
+    tree_codes: String
+}
+
+impl MetamapLiteMMIConcepts {
+    fn from<'a> (line: String) -> MetamapLiteMMIConcepts {
+        let args: Vec<&str> = line.split("|").collect();
+
+        MetamapLiteMMIConcepts{
+            index: args[0].to_string(), 
+            mm: args[1].to_string(), 
+            score: args[2].to_string(), 
+            preferred_name: args[3].to_string(), 
+            cui: args[4].to_string(), 
+            semtypes: args[5].to_string(), 
+            trigger: args[6].to_string(), 
+            pos_info: args[7].to_string(), 
+            tree_codes: args[8].to_string()
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct MetamapMMIConcepts {
     index: String,
     mm: String,
     score: String, 
@@ -21,11 +52,11 @@ pub struct MMIConcepts {
     tree_codes: String,
 }
 
-impl MMIConcepts {
-    fn from<'a> (line: String) -> MMIConcepts {
+impl MetamapMMIConcepts {
+    fn from<'a> (line: String) -> MetamapMMIConcepts {
         let args: Vec<&str> = line.split("|").collect();
 
-        MMIConcepts{
+        MetamapMMIConcepts{
             index: args[0].to_string(),
             mm: args[1].to_string(),
             score: args[2].to_string(), 
@@ -40,31 +71,30 @@ impl MMIConcepts {
     }
 }
 
-pub struct Metamap {
-    segmenter: Box<dyn Tokenizer>,
+pub struct MetamapLite {
+    //segmenter: Box<dyn Tokenizer>,
     cmd: Vec<String>,
-    fatal_flag: bool,
 }
 
-impl Metamap {
-    pub fn new(filename: &PathBuf) -> Metamap {
+impl MetamapLite {
+    pub fn new(filename: &PathBuf) -> MetamapLite {
         let mut args = Vec::new();
         args.push(filename.clone().into_os_string().into_string().unwrap());
         args.push("-N".to_string());
 
-        Metamap {
-            segmenter: Box::new(UnicodeSentenceTokenizer::default()),
+        MetamapLite {
+            // segmenter: Box::new(UnicodeSentenceTokenizer::default()),
             cmd: args,
-            fatal_flag: false,
         }
     }
 
-    pub fn extract_concepts(&mut self, input: &str, segment_sentence: bool) -> Vec<MMIConcepts> { 
+    pub fn extract_concepts(&self, input: &str, segment_sentence: bool) -> Vec<MetamapMMIConcepts> { 
         let mut mm_command = self.cmd.join(" ");
-        mm_command.push_str(" --silent");
+        mm_command.push_str("--pipe");
 
         let sentences = match segment_sentence {
-            true => self.segmenter.tokenize(input).collect(),
+            //true => self.segmenter.tokenize(input).collect(),
+            true => vec![],
             false => vec![input],
         }.join("\n");
 
@@ -76,7 +106,62 @@ impl Metamap {
                         .stdout_str()
                         .lines()
                         .skip(1)
-                        .map(|e| MMIConcepts::from(e.into()))
+                        .map(|e| MetamapMMIConcepts::from(e.into()))
+                        .collect()
+    } 
+
+    pub fn restrict_to_sources<'a> (&'a mut self, sources: Vec<String>) -> &'a mut MetamapLite {
+        self.cmd.push("--restrict_to_sources".to_string());
+        self.cmd.push(sources.join(","));
+        self
+    }
+
+    pub fn restrict_to_sts<'a> (&'a mut self, sts: Vec<String>) -> &'a mut MetamapLite {
+        self.cmd.push("--restrict_to_sts".to_string());
+        self.cmd.push(sts.join(","));
+        self
+    }
+}
+
+pub struct Metamap {
+    //segmenter: Box<dyn Tokenizer>,
+    cmd: Vec<String>,
+    fatal_flag: bool,
+}
+
+
+impl Metamap {
+    pub fn new(filename: &PathBuf) -> Metamap {
+        let mut args = Vec::new();
+        args.push(filename.clone().into_os_string().into_string().unwrap());
+        args.push("-N".to_string());
+
+        Metamap {
+            // segmenter: Box::new(UnicodeSentenceTokenizer::default()),
+            cmd: args,
+            fatal_flag: false,
+        }
+    }
+
+    pub fn extract_concepts(&self, input: &str, segment_sentence: bool) -> Vec<MetamapMMIConcepts> { 
+        let mut mm_command = self.cmd.join(" ");
+        mm_command.push_str(" --silent");
+
+        let sentences = match segment_sentence {
+            //true => self.segmenter.tokenize(input).collect(),
+            true => vec![],
+            false => vec![input],
+        }.join("\n");
+
+        let shell_command = format!("echo {}", sentences);
+
+        {Exec::shell(shell_command) | Exec::shell(mm_command)}
+                        .capture()
+                        .unwrap()
+                        .stdout_str()
+                        .lines()
+                        .skip(1)
+                        .map(|e| MetamapMMIConcepts::from(e.into()))
                         .collect()
     } 
 

@@ -12,3 +12,4 @@ vtext = "0.2"
 rayon = "1.1"
 structopt = { version = "0.3", default-features = false }
 futures = "0.3" 
+crossbeam = "0.7"

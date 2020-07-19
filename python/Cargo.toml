@@ -1,0 +1,25 @@
+[package]
+name = "rustmetamap-python"
+version = "0.8.1-rc2"
+edition = "2018"
+
+[lib]
+name = "rustmetamap"
+crate-type = ["cdylib"]
+
+[dependencies]
+
+
+[dependencies.pyo3]
+version = "0.11.1"
+features = ["extension-module"]
+
+[dependencies.rustmetamap]
+version = "*"
+path = "../../"
+
+[target.x86_64-apple-darwin]
+rustflags = [
+  "-C", "link-arg=-undefined",
+  "-C", "link-arg=dynamic_lookup",
+]

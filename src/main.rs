@@ -15,7 +15,7 @@ fn main() {
     let mm = MetamapPool::new(&PathBuf::from("/home/vin/public_mm/bin/metamap20"), 2);
 
     let sentences = vec![
-        "This man had a heart attack"; 100
+        "This man had a heart attack"; 10
     ];
 
     //let sentences: Vec<&&str> = sentences.iter().cycle().take(10).collect();

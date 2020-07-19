@@ -33,14 +33,16 @@ impl MetamapPool {
             let rx = r.clone();
 
             handles.push(thread::spawn(move || {
-                let line: String = rx.recv().unwrap();
+                loop {
+                    let line: String = rx.recv().unwrap();
 
-                for item in mm.extract_concepts(&line[..], false) {
-                    s_t.send(item).unwrap();
+                    for item in mm.extract_concepts(&line[..], false) {
+                        s_t.send(item).unwrap();
+                    }
                 }
             }));
         }
-        
+
         if segment_sentence {
             for input in inputs {
                 for sentence in self.segmenter.tokenize(input) {
@@ -64,11 +66,6 @@ impl MetamapPool {
 pub trait MetamapModel<T> {
     fn new(path: &PathBuf) -> Self;
     fn extract_concepts(&self, input: &str, segment_sentence: bool) -> Vec<T>;
-}
-
-pub enum Concepts {
-    MetamapLiteMMIConcepts,
-    MetamapMMIConcepts,
 }
 
 #[derive(Debug)]
